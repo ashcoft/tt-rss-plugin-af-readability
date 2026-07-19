@@ -3,6 +3,10 @@ require_once __DIR__ . "/vendor/autoload.php";
 
 use \fivefilters\Readability\Readability;
 
+/**
+ * Af_Readability - Tiny Tiny RSS plugin for extracting full article content
+ * using Readability.php to inline article text into feed entries.
+ */
 class Af_Readability extends Plugin {
 
 	/** @var PluginHost $host */
@@ -218,19 +222,23 @@ class Af_Readability extends Plugin {
 					$entries = $tmpxpath->query('.//a[@href]|.//img[@src]', $article->contentElement);
 
 					foreach ($entries as $entry) {
-						if ($entry->hasAttribute("href")) {
-							$entry->setAttribute("href",
-									UrlHelper::rewrite_relative(UrlHelper::$fetch_effective_url, $entry->getAttribute("href")));
+						// XPath selectors a[@href] and img[@src] always return Element nodes
+						$element = $entry instanceof \Dom\Element ? $entry : null;
+						if (!$element) continue;
+
+						if ($element->hasAttribute("href")) {
+							$element->setAttribute("href",
+									UrlHelper::rewrite_relative(UrlHelper::$fetch_effective_url, $element->getAttribute("href")));
 
 						}
 
-						if ($entry->hasAttribute("src")) {
-							if ($entry->hasAttribute("data-src")) {
-								$src = $entry->getAttribute("data-src");
+						if ($element->hasAttribute("src")) {
+							if ($element->hasAttribute("data-src")) {
+								$src = $element->getAttribute("data-src");
 							} else {
-								$src = $entry->getAttribute("src");
+								$src = $element->getAttribute("src");
 							}
-							$entry->setAttribute("src",
+							$element->setAttribute("src",
 								UrlHelper::rewrite_relative(UrlHelper::$fetch_effective_url, $src));
 
 						}
