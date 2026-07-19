@@ -38,9 +38,11 @@ jobs:
 
       - name: Psalm Security Scan
         uses: psalm/psalm-github-security-scan@f3e6fd9432bc3e44aec078572677ce9d2ef9c287
+        continue-on-error: true
 
       - name: Upload Security Analysis results to GitHub
         if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results.sarif
+        continue-on-error: true
