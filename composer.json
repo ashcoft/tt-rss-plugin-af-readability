@@ -3,14 +3,9 @@
     "prefer-stable": true,
     "repositories": [
         {
-            "name": "fivefilters/readability.php",
-            "type": "vcs",
-            "url": "https://dev.tt-rss.org/fox/readability-php.git"
-        },
-        {
-            "name": "masterminds/html5",
-            "type": "vcs",
-            "url": "https://dev.tt-rss.org/fox/html5-php.git"
+            "type": "composer",
+            "url": "https://packagist.org",
+            "canonical": true
         }
     ],
     "require": {
