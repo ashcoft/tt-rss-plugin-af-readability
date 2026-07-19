@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        php: ['8.4', '8.5']
+        dependencies: [highest, lowest]
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{matrix.php}}
+          extensions: dom, mbstring
+          tools: composer:v2
+
+      - name: Install dependencies (highest)
+        if: matrix.dependencies == 'highest'
+        run: composer update --no-interaction
+
+      - name: Install dependencies (lowest)
+        if: matrix.dependencies == 'lowest'
+        run: composer update --no-interaction --prefer-lowest --prefer-stable
+
+      - name: Run tests
+        run: ./vendor/bin/phpunit
+
+      - name: Static analysis
+        if: matrix.dependencies == 'highest'
+        run: ./vendor/bin/psalm --output-format=github --no-progress
