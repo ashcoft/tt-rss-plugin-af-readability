@@ -30,38 +30,49 @@ name: SonarCloud analysis
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
+    inputs:
+      projectKey:
+        description: 'SonarCloud Project Key'
+        required: true
+        type: string
+      organization:
+        description: 'SonarCloud Organization'
+        required: true
+        type: string
 
 permissions:
-  pull-requests: read # allows SonarCloud to decorate PRs with analysis results
+  pull-requests: read
 
 jobs:
   Analysis:
     runs-on: ubuntu-latest
-
+    # Skip if projectKey is not configured via workflow_dispatch
+    if: |
+      github.event.inputs.projectKey != '' && github.event.inputs.organization != ''
     steps:
-      - name: Analyze with SonarCloud
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-        # You can pin the exact commit or the version.
-        # uses: SonarSource/sonarcloud-github-action@v2.2.0
-        uses: SonarSource/sonarcloud-github-action@4006f663ecaf1f8093e8e4abb9227f6041f52216
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}   # Generate a token on Sonarcloud.io, add it to the secrets of this repo with the name SONAR_TOKEN (Settings > Secrets > Actions > add new repository secret)
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
         with:
-          # Additional arguments for the SonarScanner CLI
-          args:
-            # Unique keys of your project and organization. You can find them in SonarCloud > Information (bottom-left menu)
-            # mandatory
-            -Dsonar.projectKey=
-            -Dsonar.organization=
-            # Comma-separated paths to directories containing main source files.
-            #-Dsonar.sources= # optional, default is project base directory
-            # Comma-separated paths to directories containing test source files.
-            #-Dsonar.tests= # optional. For more info about Code Coverage, please refer to https://docs.sonarcloud.io/enriching/test-coverage/overview/
-            # Adds more detail to both client and server-side analysis logs, activating DEBUG mode for the scanner, and adding client-side environment variables and system properties to the server-side log of analysis report processing.
-            #-Dsonar.verbose= # optional, default is false
-          # When you need the analysis to take place in a directory other than the one from which it was launched, default is .
+          php-version: '8.4'
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress || true
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v3
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
           projectBaseDir: .
+          args: >
+            -Dsonar.projectKey=${{ github.event.inputs.projectKey }}
+            -Dsonar.organization=${{ github.event.inputs.organization }}
+            -Dsonar.sources=init.php,init.js
