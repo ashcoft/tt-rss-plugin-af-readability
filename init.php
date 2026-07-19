@@ -2,7 +2,6 @@
 require_once __DIR__ . "/vendor/autoload.php";
 
 use \fivefilters\Readability\Readability;
-use \fivefilters\Readability\Configuration;
 
 class Af_Readability extends Plugin {
 
@@ -204,33 +203,19 @@ class Af_Readability extends Plugin {
 			"type" => "text/html"]);
 
 		if ($tmp && mb_strlen($tmp) < 1024 * 500) {
-			$tmpdoc = new DOMDocument("1.0", "UTF-8");
-
-			if (!@$tmpdoc->loadHTML('<?xml encoding="UTF-8">' . $tmp))
-				return false;
-
-			// this is the worst hack yet :(
-			if (strtolower($tmpdoc->encoding) != 'utf-8') {
-				$tmp = preg_replace("/<meta.*?charset.*?\/?>/i", "", $tmp);
-				if (empty($tmpdoc->encoding)) {
-					$tmp = mb_convert_encoding($tmp, 'utf-8');
-				} else {
-					$tmp = mb_convert_encoding($tmp, 'utf-8', $tmpdoc->encoding);
-				}
-			}
-
 			try {
 
-				$r = new Readability(new Configuration([
-					'FixRelativeURLs'      => true,
-					'OriginalURL'          => $url,
-					'ExtraIgnoredElements' => ['template'],
-				]));
+				$r = new Readability(
+					fixRelativeURLs: true,
+					originalURL: $url,
+					extraIgnoredElements: ['template'],
+				);
 
-				if ($r->parse($tmp)) {
+				$article = $r->parse($tmp);
 
-					$tmpxpath = new DOMXPath($r->getDOMDOcument());
-					$entries = $tmpxpath->query('(//a[@href]|//img[@src])');
+				if ($article && $article->hasContent()) {
+					$tmpxpath = new \Dom\XPath($article->contentElement->ownerDocument);
+					$entries = $tmpxpath->query('.//a[@href]|.//img[@src]', $article->contentElement);
 
 					foreach ($entries as $entry) {
 						if ($entry->hasAttribute("href")) {
@@ -251,7 +236,7 @@ class Af_Readability extends Plugin {
 						}
 					}
 
-					return $r->getContent();
+					return $article->content;
 				}
 
 			} catch (Exception $e) {
