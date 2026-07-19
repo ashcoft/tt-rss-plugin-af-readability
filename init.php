@@ -236,10 +236,11 @@ class Af_Readability extends Plugin {
 						}
 					}
 
-					return $article->content;
+					// Re-serialize the DOM after mutations (content property is readonly/cached)
+					return $article->contentElement->innerHTML;
 				}
 
-			} catch (Exception $e) {
+			} catch (Throwable $e) {
 				return false;
 			}
 		}
