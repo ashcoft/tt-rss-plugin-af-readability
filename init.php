@@ -200,6 +200,7 @@ class Af_Readability extends Plugin {
 	 * @return string|false
 	 */
 	public function extract_content(string $url) {
+		$result = false;
 
 		$tmp = UrlHelper::fetch([
 			"url" => $url,
@@ -208,52 +209,62 @@ class Af_Readability extends Plugin {
 
 		if ($tmp && mb_strlen($tmp) < 1024 * 500) {
 			try {
-				// Try with lower char threshold first for pages with shorter articles
-				$config = new \fivefilters\Readability\Configuration(
-					fixRelativeURLs: true,
-					originalURL: $url,
-					charThreshold: 200,
-					keepClasses: true,
-					stripUnlikelyCandidates: true,
-					weightClasses: true,
-					cleanConditionally: true,
-				);
-
-				$r = new Readability($config);
-				$article = $r->parse($tmp);
-
-				if ($article && $article->hasContent()) {
-					$content = $this->fixContentUrls($article->contentElement, $url);
-
-					// If content is too short, retry with even lower threshold
-					if (mb_strlen(strip_tags($content)) < 200) {
-						$config2 = new \fivefilters\Readability\Configuration(
-							fixRelativeURLs: true,
-							originalURL: $url,
-							charThreshold: 100,
-							keepClasses: true,
-							stripUnlikelyCandidates: false,
-							weightClasses: false,
-						);
-						$r2 = new Readability($config2);
-						$article2 = $r2->parse($tmp);
-						if ($article2 && $article2->hasContent()) {
-							$content2 = $this->fixContentUrls($article2->contentElement, $url);
-							if (mb_strlen(strip_tags($content2)) > mb_strlen(strip_tags($content))) {
-								return $content2;
-							}
-						}
-					}
-
-					return $content;
-				}
-
+				$result = $this->tryExtractContent($tmp, $url);
 			} catch (Throwable $e) {
-				return false;
+				$result = false;
 			}
 		}
 
-		return false;
+		return $result;
+	}
+
+	/**
+	 * Try to extract article content with fallback strategy
+	 */
+	private function tryExtractContent(string $html, string $url): string|false {
+		// First attempt with standard threshold
+		$config = new \fivefilters\Readability\Configuration(
+			fixRelativeURLs: true,
+			originalURL: $url,
+			charThreshold: 200,
+			keepClasses: true,
+			stripUnlikelyCandidates: true,
+			weightClasses: true,
+			cleanConditionally: true,
+		);
+
+		$r = new Readability($config);
+		$article = $r->parse($html);
+
+		if (!$article || !$article->hasContent()) {
+			return false;
+		}
+
+		$content = $this->fixContentUrls($article->contentElement, $url);
+		$contentLength = mb_strlen(strip_tags($content));
+
+		// If content is too short, retry with even lower threshold
+		if ($contentLength < 200) {
+			$config2 = new \fivefilters\Readability\Configuration(
+				fixRelativeURLs: true,
+				originalURL: $url,
+				charThreshold: 100,
+				keepClasses: true,
+				stripUnlikelyCandidates: false,
+				weightClasses: false,
+			);
+			$r2 = new Readability($config2);
+			$article2 = $r2->parse($html);
+
+			if ($article2 && $article2->hasContent()) {
+				$content2 = $this->fixContentUrls($article2->contentElement, $url);
+				if (mb_strlen(strip_tags($content2)) > $contentLength) {
+					return $content2;
+				}
+			}
+		}
+
+		return $content;
 	}
 
 	/**
