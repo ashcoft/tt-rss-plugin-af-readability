@@ -222,10 +222,13 @@ class Af_Readability extends Plugin {
 	 * Try to extract article content with fallback strategy
 	 */
 	private function tryExtractContent(string $html, string $url): string|false {
+		// Get effective URL after redirects for accurate URL rewriting
+		$effectiveUrl = UrlHelper::$fetch_effective_url ?: $url;
+
 		// First attempt with standard threshold
 		$config = new \fivefilters\Readability\Configuration(
 			fixRelativeURLs: true,
-			originalURL: $url,
+			originalURL: $effectiveUrl,
 			charThreshold: 200,
 			keepClasses: true,
 			stripUnlikelyCandidates: true,
@@ -240,24 +243,25 @@ class Af_Readability extends Plugin {
 			return false;
 		}
 
-		$content = $this->fixContentUrls($article->contentElement, $url);
+		$content = $this->fixContentUrls($article->contentElement, $effectiveUrl);
 		$contentLength = mb_strlen(strip_tags($content));
 
-		// If content is too short, retry with even lower threshold
+		// If content is too short, retry with even lower threshold and relaxed filtering
 		if ($contentLength < 200) {
 			$config2 = new \fivefilters\Readability\Configuration(
 				fixRelativeURLs: true,
-				originalURL: $url,
+				originalURL: $effectiveUrl,
 				charThreshold: 100,
 				keepClasses: true,
 				stripUnlikelyCandidates: false,
 				weightClasses: false,
+				cleanConditionally: false,
 			);
 			$r2 = new Readability($config2);
 			$article2 = $r2->parse($html);
 
 			if ($article2 && $article2->hasContent()) {
-				$content2 = $this->fixContentUrls($article2->contentElement, $url);
+				$content2 = $this->fixContentUrls($article2->contentElement, $effectiveUrl);
 				if (mb_strlen(strip_tags($content2)) > $contentLength) {
 					return $content2;
 				}
