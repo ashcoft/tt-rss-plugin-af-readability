@@ -208,44 +208,44 @@ class Af_Readability extends Plugin {
 
 		if ($tmp && mb_strlen($tmp) < 1024 * 500) {
 			try {
-
-				$r = new Readability(
+				// Try with lower char threshold first for pages with shorter articles
+				$config = new \fivefilters\Readability\Configuration(
 					fixRelativeURLs: true,
 					originalURL: $url,
-					extraIgnoredElements: ['template'],
+					charThreshold: 200,
+					keepClasses: true,
+					stripUnlikelyCandidates: true,
+					weightClasses: true,
+					cleanConditionally: true,
 				);
 
+				$r = new Readability($config);
 				$article = $r->parse($tmp);
 
 				if ($article && $article->hasContent()) {
-					$tmpxpath = new \Dom\XPath($article->contentElement->ownerDocument);
-					$entries = $tmpxpath->query('.//a[@href]|.//img[@src]', $article->contentElement);
+					$content = $this->fixContentUrls($article->contentElement, $url);
 
-					foreach ($entries as $entry) {
-						// XPath selectors a[@href] and img[@src] always return Element nodes
-						$element = $entry instanceof \Dom\Element ? $entry : null;
-						if (!$element) continue;
-
-						if ($element->hasAttribute("href")) {
-							$element->setAttribute("href",
-									UrlHelper::rewrite_relative(UrlHelper::$fetch_effective_url, $element->getAttribute("href")));
-
-						}
-
-						if ($element->hasAttribute("src")) {
-							if ($element->hasAttribute("data-src")) {
-								$src = $element->getAttribute("data-src");
-							} else {
-								$src = $element->getAttribute("src");
+					// If content is too short, retry with even lower threshold
+					if (mb_strlen(strip_tags($content)) < 200) {
+						$config2 = new \fivefilters\Readability\Configuration(
+							fixRelativeURLs: true,
+							originalURL: $url,
+							charThreshold: 100,
+							keepClasses: true,
+							stripUnlikelyCandidates: false,
+							weightClasses: false,
+						);
+						$r2 = new Readability($config2);
+						$article2 = $r2->parse($tmp);
+						if ($article2 && $article2->hasContent()) {
+							$content2 = $this->fixContentUrls($article2->contentElement, $url);
+							if (mb_strlen(strip_tags($content2)) > mb_strlen(strip_tags($content))) {
+								return $content2;
 							}
-							$element->setAttribute("src",
-								UrlHelper::rewrite_relative(UrlHelper::$fetch_effective_url, $src));
-
 						}
 					}
 
-					// Re-serialize the DOM after mutations (content property is readonly/cached)
-					return $article->contentElement->innerHTML;
+					return $content;
 				}
 
 			} catch (Throwable $e) {
@@ -254,6 +254,36 @@ class Af_Readability extends Plugin {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Fix relative URLs in content element
+	 */
+	private function fixContentUrls(\Dom\Element $contentElement, string $baseUrl): string {
+		$tmpxpath = new \Dom\XPath($contentElement->ownerDocument);
+		$entries = $tmpxpath->query('.//a[@href]|.//img[@src]', $contentElement);
+
+		foreach ($entries as $entry) {
+			$element = $entry instanceof \Dom\Element ? $entry : null;
+			if (!$element) continue;
+
+			if ($element->hasAttribute("href")) {
+				$element->setAttribute("href",
+					UrlHelper::rewrite_relative($baseUrl, $element->getAttribute("href")));
+			}
+
+			if ($element->hasAttribute("src")) {
+				if ($element->hasAttribute("data-src")) {
+					$src = $element->getAttribute("data-src");
+				} else {
+					$src = $element->getAttribute("src");
+				}
+				$element->setAttribute("src",
+					UrlHelper::rewrite_relative($baseUrl, $src));
+			}
+		}
+
+		return $contentElement->innerHTML;
 	}
 
 	/**
