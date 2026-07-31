@@ -72,7 +72,7 @@ jobs:
         if: steps.check.outputs.update_available == 'true'
         run: |
           composer require fivefilters/readability.php:${{ steps.check.outputs.new_version }} --no-interaction --no-update
-          composer update fivefilters/readability.php --lock --prefer-stable --no-interaction
+          composer update fivefilters/readability.php --lock --no-interaction
 
       - name: Create Pull Request
         if: steps.check.outputs.update_available == 'true'
