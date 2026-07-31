@@ -1,0 +1,11 @@
+# Ignore test-related files
+/test/ export-ignore
+/phpunit.xml export-ignore
+/Makefile export-ignore
+/docker export-ignore
+/docker-compose.yml export-ignore
+
+# Exclude test files from GitHub's language statistics (** needed to match
+# nested files like test/test-pages/*/source.html, * stops at directories)
+/test/** linguist-vendored
+* text=auto eol=lf
