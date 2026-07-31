@@ -200,6 +200,7 @@ class Af_Readability extends Plugin {
 	 * @return string|false
 	 */
 	public function extract_content(string $url) {
+		$result = false;
 
 		$tmp = UrlHelper::fetch([
 			"url" => $url,
@@ -208,52 +209,96 @@ class Af_Readability extends Plugin {
 
 		if ($tmp && mb_strlen($tmp) < 1024 * 500) {
 			try {
-
-				$r = new Readability(
-					fixRelativeURLs: true,
-					originalURL: $url,
-					extraIgnoredElements: ['template'],
-				);
-
-				$article = $r->parse($tmp);
-
-				if ($article && $article->hasContent()) {
-					$tmpxpath = new \Dom\XPath($article->contentElement->ownerDocument);
-					$entries = $tmpxpath->query('.//a[@href]|.//img[@src]', $article->contentElement);
-
-					foreach ($entries as $entry) {
-						// XPath selectors a[@href] and img[@src] always return Element nodes
-						$element = $entry instanceof \Dom\Element ? $entry : null;
-						if (!$element) continue;
-
-						if ($element->hasAttribute("href")) {
-							$element->setAttribute("href",
-									UrlHelper::rewrite_relative(UrlHelper::$fetch_effective_url, $element->getAttribute("href")));
-
-						}
-
-						if ($element->hasAttribute("src")) {
-							if ($element->hasAttribute("data-src")) {
-								$src = $element->getAttribute("data-src");
-							} else {
-								$src = $element->getAttribute("src");
-							}
-							$element->setAttribute("src",
-								UrlHelper::rewrite_relative(UrlHelper::$fetch_effective_url, $src));
-
-						}
-					}
-
-					// Re-serialize the DOM after mutations (content property is readonly/cached)
-					return $article->contentElement->innerHTML;
-				}
-
+				$result = $this->tryExtractContent($tmp, $url);
 			} catch (Throwable $e) {
-				return false;
+				$result = false;
 			}
 		}
 
-		return false;
+		return $result;
+	}
+
+	/**
+	 * Try to extract article content with fallback strategy
+	 */
+	private function tryExtractContent(string $html, string $url): string|false {
+		// Get effective URL after redirects for accurate URL rewriting
+		$effectiveUrl = UrlHelper::$fetch_effective_url ?: $url;
+
+		// First attempt with standard threshold
+		$config = new \fivefilters\Readability\Configuration(
+			fixRelativeURLs: true,
+			originalURL: $effectiveUrl,
+			charThreshold: 200,
+			keepClasses: true,
+			stripUnlikelyCandidates: true,
+			weightClasses: true,
+			cleanConditionally: true,
+		);
+
+		$r = new Readability($config);
+		$article = $r->parse($html);
+
+		if (!$article || !$article->hasContent()) {
+			return false;
+		}
+
+		$content = $this->fixContentUrls($article->contentElement, $effectiveUrl);
+		$contentLength = mb_strlen(strip_tags($content));
+
+		// If content is too short, retry with even lower threshold and relaxed filtering
+		if ($contentLength < 200) {
+			$config2 = new \fivefilters\Readability\Configuration(
+				fixRelativeURLs: true,
+				originalURL: $effectiveUrl,
+				charThreshold: 100,
+				keepClasses: true,
+				stripUnlikelyCandidates: false,
+				weightClasses: false,
+				cleanConditionally: false,
+			);
+			$r2 = new Readability($config2);
+			$article2 = $r2->parse($html);
+
+			if ($article2 && $article2->hasContent()) {
+				$content2 = $this->fixContentUrls($article2->contentElement, $effectiveUrl);
+				if (mb_strlen(strip_tags($content2)) > $contentLength) {
+					return $content2;
+				}
+			}
+		}
+
+		return $content;
+	}
+
+	/**
+	 * Fix relative URLs in content element
+	 */
+	private function fixContentUrls(\Dom\Element $contentElement, string $baseUrl): string {
+		$tmpxpath = new \Dom\XPath($contentElement->ownerDocument);
+		$entries = $tmpxpath->query('.//a[@href]|.//img[@src]', $contentElement);
+
+		foreach ($entries as $entry) {
+			$element = $entry instanceof \Dom\Element ? $entry : null;
+			if (!$element) continue;
+
+			if ($element->hasAttribute("href")) {
+				$element->setAttribute("href",
+					UrlHelper::rewrite_relative($baseUrl, $element->getAttribute("href")));
+			}
+
+			if ($element->hasAttribute("src")) {
+				if ($element->hasAttribute("data-src")) {
+					$src = $element->getAttribute("data-src");
+				} else {
+					$src = $element->getAttribute("src");
+				}
+				$element->setAttribute("src",
+					UrlHelper::rewrite_relative($baseUrl, $src));
+			}
+		}
+
+		return $contentElement->innerHTML;
 	}
 
 	/**
