@@ -1,0 +1,99 @@
+name: Dependency Update
+
+on:
+  schedule:
+    # Run every day at 6:00 AM UTC
+    - cron: '0 6 * * *'
+  # Allow manual trigger
+  workflow_dispatch:
+  # Allow triggering via API
+  repository_dispatch:
+    types: [check-dependencies]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-dependencies:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@b604ade2a87db23f8871b7182e69ec5e75effb45
+        with:
+          php-version: '8.5'
+          coverage: none
+          tools: composer
+
+      - name: Get current readability version
+        id: current-version
+        run: |
+          CURRENT=$(grep -oP '"fivefilters/readability.php": "\K[^"]+' composer.json)
+          echo "current_version=$CURRENT" >> $GITHUB_OUTPUT
+          echo "Current readability.php version: $CURRENT"
+
+      - name: Get latest readability version from Packagist
+        id: latest-version
+        run: |
+          curl -sS "https://packagist.org/packages/fivefilters/readability.php.json" > /tmp/packagist.json
+          LATEST=$(python3 -c "import sys, json; data = json.load(open('/tmp/packagist.json')); print(data['package']['versions'][-1]['version'])")
+          echo "latest_version=$LATEST" >> $GITHUB_OUTPUT
+          echo "Latest readability.php version: $LATEST"
+
+      - name: Check for updates
+        id: check
+        run: |
+          CURRENT="${{ steps.current-version.outputs.current_version }}"
+          LATEST="${{ steps.latest-version.outputs.latest_version }}"
+          
+          # Normalize versions for comparison (remove v prefix)
+          CURRENT_NUM=$(echo "$CURRENT" | sed 's/^v//')
+          LATEST_NUM=$(echo "$LATEST" | sed 's/^v//')
+          
+          echo "Comparing: $CURRENT_NUM vs $LATEST_NUM"
+          
+          if [ "$CURRENT_NUM" != "$LATEST_NUM" ]; then
+            echo "Update available: $CURRENT_NUM -> $LATEST_NUM"
+            echo "update_available=true" >> $GITHUB_OUTPUT
+            echo "new_version=$LATEST" >> $GITHUB_OUTPUT
+          else
+            echo "Already up to date"
+            echo "update_available=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update dependencies
+        if: steps.check.outputs.update_available == 'true'
+        run: |
+          composer require fivefilters/readability.php:${{ steps.check.outputs.new_version }} --no-interaction --with-all-dependencies
+
+      - name: Create Pull Request
+        if: steps.check.outputs.update_available == 'true'
+        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Update fivefilters/readability.php to ${{ steps.check.outputs.new_version }}"
+          title: "Update fivefilters/readability.php to ${{ steps.check.outputs.new_version }}"
+          body: |
+            ## Dependency Update
+
+            Update `fivefilters/readability.php` to version `${{ steps.check.outputs.new_version }}`.
+
+            This PR was automatically created by the Dependency Update workflow.
+
+            ### Release Notes
+            Check the release notes: https://github.com/fivefilters/readability.php/releases/tag/${{ steps.check.outputs.new_version }}
+
+            ### Actions
+            - [ ] Review the changes
+            - [ ] Run tests if available
+            - [ ] Merge when ready
+          branch: "dependabot/readability-${{ steps.check.outputs.new_version }}"
+          delete-branch: true
+          base: main
