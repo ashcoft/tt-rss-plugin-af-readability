@@ -71,6 +71,7 @@ jobs:
       - name: Update dependencies
         if: steps.check.outputs.update_available == 'true'
         run: |
+          # SonarQube: intentional dynamic version for automated dependency updates
           composer require fivefilters/readability.php:${{ steps.check.outputs.new_version }} --no-interaction --with-all-dependencies
           composer update fivefilters/readability.php --lock --no-interaction
 
