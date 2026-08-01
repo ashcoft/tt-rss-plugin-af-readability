@@ -43,7 +43,29 @@ jobs:
         id: latest-version
         run: |
           curl -sS "https://packagist.org/packages/fivefilters/readability.php.json" > /tmp/packagist.json
-          LATEST=$(python3 -c "import sys, json; data = json.load(open('/tmp/packagist.json')); print(data['package']['versions'][-1]['version'])")
+          # Versions are stored as dict keys, need to sort by version number
+          # Packagist returns versions in reverse order (newest first)
+          LATEST=$(python3 -c "
+import sys, json
+data = json.load(open('/tmp/packagist.json'))
+versions = list(data['package']['versions'].keys())
+# Remove v prefix and sort
+def sort_key(v):
+    v = v.lstrip('v')
+    parts = []
+    for p in v.replace('-', '.').split('.'):
+        try:
+            parts.append(int(p))
+        except:
+            parts.append(0)
+    # Pad to ensure consistent sorting
+    while len(parts) < 4:
+        parts.append(0)
+    return tuple(parts)
+
+sorted_versions = sorted(versions, key=sort_key, reverse=True)
+print(sorted_versions[0])
+")
           echo "latest_version=$LATEST" >> $GITHUB_OUTPUT
           echo "Latest readability.php version: $LATEST"
 
