@@ -12,17 +12,31 @@ class Af_Readability extends Plugin {
     /** @var PluginHost $host */
     private $host;
 
+    /**
+     * Get plugin info.
+     *
+     * @return array Plugin info array
+     */
     public function about() {
         return array(null,
             "Try to inline article content using Readability",
             "fox");
     }
 
+    /**
+     * Get plugin flags.
+     *
+     * @return array Plugin flags
+     */
     public function flags() {
         return array("needs_curl" => true);
     }
 
-    /** @return void */
+    /**
+     * Save plugin settings.
+     *
+     * @return void
+     */
     public function save() {
         $enable_share_anything = checkbox_to_sql_bool($_POST["enable_share_anything"] ?? "");
 
@@ -31,6 +45,12 @@ class Af_Readability extends Plugin {
         echo __("Data saved.");
     }
 
+    /**
+     * Initialize plugin hooks.
+     *
+     * @param PluginHost $host
+     * @return void
+     */
     public function init($host)
     {
         $this->host = $host;
@@ -49,15 +69,32 @@ class Af_Readability extends Plugin {
         $host->add_filter_action($this, "action_inline_append", __("Append content"));
     }
 
+    /**
+     * Get JavaScript for the plugin.
+     *
+     * @return string JavaScript content
+     */
     public function get_js() {
         return file_get_contents(__DIR__ . "/init.js");
     }
 
+    /**
+     * Hook to add article button.
+     *
+     * @param array $line Article line data
+     * @return string HTML for the button
+     */
     public function hook_article_button($line) {
         return "<i class='material-icons' onclick=\"Plugins.Af_Readability.embed(".$line["id"].")\"
             style='cursor : pointer' title=\"".__('Toggle full article text')."\">description</i>";
     }
 
+    /**
+     * Hook to add preferences tab.
+     *
+     * @param string $args Tab identifier
+     * @return void
+     */
     public function hook_prefs_tab($args) {
         if ($args != "prefFeeds") {
             return;
@@ -130,6 +167,12 @@ class Af_Readability extends Plugin {
         <?php
     }
 
+    /**
+     * Hook to add feed edit preferences.
+     *
+     * @param int $feed_id Feed ID
+     * @return void
+     */
     public function hook_prefs_edit_feed($feed_id) {
         $enabled_feeds = $this->get_stored_array("enabled_feeds");
         $append_feeds = $this->get_stored_array("append_feeds");
@@ -153,6 +196,12 @@ class Af_Readability extends Plugin {
         <?php
     }
 
+    /**
+     * Hook to save feed preferences.
+     *
+     * @param int $feed_id Feed ID
+     * @return void
+     */
     public function hook_prefs_save_feed($feed_id) {
         $enabled_feeds = $this->get_stored_array("enabled_feeds");
         $append_feeds = $this->get_stored_array("append_feeds");
@@ -187,6 +236,13 @@ class Af_Readability extends Plugin {
         $this->host->set($this, "append_feeds", $append_feeds);
     }
 
+    /**
+     * Hook for article filter actions.
+     *
+     * @param array $article Article data
+     * @param string $action Action name
+     * @return array Modified article
+     */
     public function hook_article_filter_action($article, $action) {
         switch ($action) {
             case "action_inline":
@@ -338,6 +394,12 @@ class Af_Readability extends Plugin {
         return $this->host->get_array($this, $name);
     }
 
+    /**
+     * Hook for article filtering.
+     *
+     * @param array $article Article data
+     * @return array Modified article
+     */
     public function hook_article_filter($article) {
 
         $enabled_feeds = $this->get_stored_array("enabled_feeds");
@@ -353,6 +415,12 @@ class Af_Readability extends Plugin {
 
     }
 
+    /**
+     * Hook for getting full text of an article.
+     *
+     * @param string $link Article URL
+     * @return string|false Extracted content or false
+     */
     public function hook_get_full_text($link) {
         $enable_share_anything = $this->host->get($this, "enable_share_anything");
 
@@ -370,6 +438,11 @@ class Af_Readability extends Plugin {
         return false;
     }
 
+    /**
+     * Get API version.
+     *
+     * @return int API version number
+     */
     public function api_version() {
         return 2;
     }
@@ -395,6 +468,11 @@ class Af_Readability extends Plugin {
         return $tmp;
     }
 
+    /**
+     * Embed handler for article content.
+     *
+     * @return void
+     */
     public function embed() : void {
         // Enforce authentication before processing request
         if (session_status() !== PHP_SESSION_ACTIVE) {
