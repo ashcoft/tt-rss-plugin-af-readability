@@ -1,0 +1,26 @@
+version = 1
+
+test_patterns = [
+  "tests/**",
+  "*_test.php",
+  "Test.php"
+]
+
+exclude_patterns = [
+  "vendor/**"
+]
+
+[lint]
+  # Ignore pre-existing issues for new PRs
+  enable = true
+
+[[analyzers]]
+name = "php"
+enabled = true
+
+  [analyzers.meta]
+  runtime_version = "8.5"
+
+[[analyzers]]
+name = "javascript"
+enabled = true
