@@ -17,9 +17,7 @@
         "fivefilters/readability.php": "^4.1",
         "psr/http-factory": "^1.0"
     },
-    "require-dev": {
-        "phpstan/phpstan": "^1.10"
-    },
+    "require-dev": {},
     "scripts": {
         "check": "composer validate && phpstan analyse --no-progress",
         "analyse": "phpstan analyse"
