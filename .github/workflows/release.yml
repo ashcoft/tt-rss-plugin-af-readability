@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
           php-version: '8.4'
           tools: composer
@@ -30,6 +30,9 @@ jobs:
       - name: Validate composer
         run: composer validate --strict
 
+      - name: Install semantic-release
+        run: npm install --save-dev @semantic-release/changelog@6 @semantic-release/exec@6 @semantic-release/git@10 @semantic-release/github@9
+
       - name: Release with semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -37,4 +40,4 @@ jobs:
           GIT_AUTHOR_EMAIL: semantic-release@users.noreply.github.com
           GIT_COMMITTER_NAME: semantic-release
           GIT_COMMITTER_EMAIL: semantic-release@users.noreply.github.com
-        run: npx semantic-release
+        run: npx --no semantic-release
