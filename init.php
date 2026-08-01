@@ -12,12 +12,18 @@ class Af_Readability extends Plugin {
 	/** @var PluginHost $host */
 	private $host;
 
+	/**
+	 * @return array{0: null, 1: string, 2: string}
+	 */
 	function about() {
 		return array(null,
 			"Try to inline article content using Readability",
 			"fox");
 	}
 
+	/**
+	 * @return array<string, bool>
+	 */
 	function flags() {
 		return array("needs_curl" => true);
 	}
@@ -49,15 +55,26 @@ class Af_Readability extends Plugin {
 		$host->add_filter_action($this, "action_inline_append", __("Append content"));
 	}
 
+	/**
+	 * @return string
+	 */
 	function get_js() {
 		return file_get_contents(__DIR__ . "/init.js");
 	}
 
+	/**
+	 * @param array<string, mixed> $line
+	 * @return string
+	 */
 	function hook_article_button($line) {
 		return "<i class='material-icons' onclick=\"Plugins.Af_Readability.embed(".$line["id"].")\"
 			style='cursor : pointer' title=\"".__('Toggle full article text')."\">description</i>";
 	}
 
+	/**
+	 * @param string $args
+	 * @return void
+	 */
 	function hook_prefs_tab($args) {
 		if ($args != "prefFeeds") return;
 
@@ -128,6 +145,10 @@ class Af_Readability extends Plugin {
 		<?php
 	}
 
+	/**
+	 * @param int $feed_id
+	 * @return void
+	 */
 	function hook_prefs_edit_feed($feed_id) {
 		$enabled_feeds = $this->get_stored_array("enabled_feeds");
 		$append_feeds = $this->get_stored_array("append_feeds");
@@ -151,6 +172,10 @@ class Af_Readability extends Plugin {
 		<?php
 	}
 
+	/**
+	 * @param int $feed_id
+	 * @return void
+	 */
 	function hook_prefs_save_feed($feed_id) {
 		$enabled_feeds = $this->get_stored_array("enabled_feeds");
 		$append_feeds = $this->get_stored_array("append_feeds");
@@ -185,6 +210,11 @@ class Af_Readability extends Plugin {
 		$this->host->set($this, "append_feeds", $append_feeds);
 	}
 
+	/**
+	 * @param array<string, mixed> $article
+	 * @param string $action
+	 * @return array<string, mixed>
+	 */
 	function hook_article_filter_action($article, $action) {
 		switch ($action) {
 			case "action_inline":
@@ -333,6 +363,10 @@ class Af_Readability extends Plugin {
 		return $this->host->get_array($this, $name);
 	}
 
+	/**
+	 * @param array<string, mixed> $article
+	 * @return array<string, mixed>
+	 */
 	function hook_article_filter($article) {
 
 		$enabled_feeds = $this->get_stored_array("enabled_feeds");
@@ -347,6 +381,10 @@ class Af_Readability extends Plugin {
 
 	}
 
+	/**
+	 * @param string $link
+	 * @return string|false
+	 */
 	function hook_get_full_text($link) {
 		$enable_share_anything = $this->host->get($this, "enable_share_anything");
 
@@ -364,6 +402,9 @@ class Af_Readability extends Plugin {
 		return false;
 	}
 
+	/**
+	 * @return int
+	 */
 	function api_version() {
 		return 2;
 	}
@@ -389,6 +430,9 @@ class Af_Readability extends Plugin {
 		return $tmp;
 	}
 
+	/**
+	 * @return void
+	 */
 	function embed() : void {
 		$article_id = (int) $_REQUEST["id"];
 
