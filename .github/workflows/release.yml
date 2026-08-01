@@ -30,8 +30,20 @@ jobs:
       - name: Validate composer
         run: composer validate --strict
 
-      - name: Install semantic-release
-        run: npm install --save-dev @semantic-release/changelog@6 @semantic-release/exec@6 @semantic-release/git@10 @semantic-release/github@9
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install semantic-release with locked versions
+        run: |
+          npm install --package-lock-only --ignore-scripts \
+            "@semantic-release/changelog@6.0.3" \
+            "@semantic-release/exec@6.0.3" \
+            "@semantic-release/git@10.0.1" \
+            "@semantic-release/github@9.2.6"
+          npm ci --ignore-scripts
 
       - name: Release with semantic-release
         env:
