@@ -8,15 +8,16 @@
 
 Plugins.Af_Readability = {
     orig_attr_name: 'data-readability-orig-content',
-    self: this,
-    embed: function(id) {
+    embed(id) {
+        const orig_attr_name = this.orig_attr_name;
+
         const content = document.querySelector(App.isCombinedMode() ? `.cdm[data-article-id="${id}"] .content-inner` :
             `.post[data-article-id="${id}"] .content`);
 
-        if (content.hasAttribute(self.orig_attr_name)) {
+        if (content.hasAttribute(orig_attr_name)) {
             // Restore original content from stored attribute
-            content.innerHTML = content.getAttribute(self.orig_attr_name);
-            content.removeAttribute(self.orig_attr_name);
+            content.innerHTML = content.getAttribute(orig_attr_name);
+            content.removeAttribute(orig_attr_name);
 
             if (App.isCombinedMode()) Article.cdmMoveToId(id);
 
@@ -28,7 +29,7 @@ Plugins.Af_Readability = {
         xhr.json("backend.php", App.getPhArgs("af_readability", "embed", {id: id}), (reply) => {
 
             if (content && reply.content) {
-                content.setAttribute(self.orig_attr_name, content.innerHTML);
+                content.setAttribute(orig_attr_name, content.innerHTML);
                 // Render HTML content from Readability parser (sanitized server-side)
                 content.innerHTML = reply.content;
                 Notify.close();

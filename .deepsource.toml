@@ -13,9 +13,6 @@ exclude_patterns = [
 [linter.php]
 enabled = true
 
-  [linter.php.phpcs]
-    enabled = true
-
 [[analyzers]]
 name = "php"
 enabled = true
