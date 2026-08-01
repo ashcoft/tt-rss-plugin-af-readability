@@ -16,10 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
 
       - name: Set up PHP
-        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        uses: shivammathur/setup-php@7d835878343a71575c27bf6a326cbcff35fed5bc
         with:
           php-version: '8.4'
           tools: composer
@@ -53,15 +53,16 @@ jobs:
           GIT_COMMITTER_NAME: semantic-release
           GIT_COMMITTER_EMAIL: semantic-release@users.noreply.github.com
         run: |
-          # Use set +e to prevent immediate exit on error, allowing us to capture
-          # semantic-release's exit code and handle "no release needed" gracefully.
-          # Exit code 4 means no conventional commits since last release (not an error).
-          set +e
-          npx --no semantic-release
+          # Run semantic-release and capture exit code.
+          # Exit code 4 = no release needed (no conventional commits since last release).
+          # This is expected behavior and should not fail the workflow.
+          run_semantic_release() {
+            npx --no semantic-release
+            return $?
+          }
+          run_semantic_release
           exit_code=$?
-          set -e
-          # Handle "no release needed" (exit code 4) as success
-          if [ $exit_code -eq 4 ]; then
+          if [ "$exit_code" -eq 4 ]; then
             echo "No release needed (no conventional commits)"
             exit 0
           fi
