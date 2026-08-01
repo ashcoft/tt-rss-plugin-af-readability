@@ -33,7 +33,7 @@ jobs:
 
       - name: Release with release-please
         id: release
-        uses: googleapis/release-please-action@9911d4de73c10fdf8ee3c5de67b93b098fad18bd
+        uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           release-type: composer
@@ -43,7 +43,7 @@ jobs:
 
       - name: Create GitHub Release
         if: steps.release.outputs.releases_created == 'true'
-        uses: softprops/action-gh-release@de65e770a299c0a2de6c2f915a6003aa254ca6ac
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
         with:
           tag_name: ${{ steps.release.outputs.tag_name }}
           release_name: ${{ steps.release.outputs.tag_name }}
