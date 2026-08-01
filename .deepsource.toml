@@ -1,0 +1,28 @@
+version = 1
+
+test_patterns = [
+  "tests/**",
+  "*_test.php",
+  "Test.php"
+]
+
+exclude_patterns = [
+  "vendor/**"
+]
+
+[linter.php]
+enabled = true
+
+  [linter.php.phpcs]
+    enabled = true
+
+[[analyzers]]
+name = "php"
+enabled = true
+
+  [analyzers.meta]
+  runtime_version = "8.5"
+
+[[analyzers]]
+name = "javascript"
+enabled = true

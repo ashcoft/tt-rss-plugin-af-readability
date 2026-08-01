@@ -30,7 +30,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@b604ade2a87db23f8871b7182e69ec5e75effb45
         with:
-          php-version: '8.5'
+          php-version: '8.4'
           coverage: none
 
       - name: Install dependencies
@@ -42,7 +42,7 @@ jobs:
 
       - name: Upload Security Analysis results to GitHub
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@a2983b8bed1923f44751c5c43237f479442827b3
         with:
           sarif_file: results.sarif
         continue-on-error: true

@@ -222,7 +222,6 @@ class Af_Readability extends Plugin {
 	 * Try to extract article content with fallback strategy
 	 */
 	private function tryExtractContent(string $html, string $url): string|false {
-		// Get effective URL after redirects for accurate URL rewriting
 		$effectiveUrl = UrlHelper::$fetch_effective_url ?: $url;
 
 		// First attempt with standard threshold

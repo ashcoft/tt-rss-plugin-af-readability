@@ -1,4 +1,8 @@
 {
+    "name": "ashcoft/tt-rss-plugin-af-readability",
+    "description": "Tiny Tiny RSS plugin for extracting full article content using Readability.php",
+    "type": "project",
+    "license": "GPL-2.0-or-later",
     "minimum-stability": "stable",
     "prefer-stable": true,
     "repositories": [
@@ -9,7 +13,18 @@
         }
     ],
     "require": {
+        "php": ">=8.1",
         "fivefilters/readability.php": "^4.1",
         "psr/http-factory": "^1.0"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^1.10"
+    },
+    "scripts": {
+        "check": "composer validate && phpstan analyse --no-progress",
+        "analyse": "phpstan analyse"
+    },
+    "config": {
+        "sort-packages": true
     }
 }
