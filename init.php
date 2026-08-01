@@ -393,7 +393,7 @@ class Af_Readability extends Plugin {
 	function embed() : void {
 		// Enforce authentication before processing request
 		if (session_status() !== PHP_SESSION_ACTIVE) {
-			@session_start();
+			session_start();
 		}
 		if (empty($_SESSION['uid'])) {
 			http_response_code(401);
