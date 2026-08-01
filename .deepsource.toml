@@ -20,6 +20,14 @@ enabled = true
   [analyzers.meta]
   runtime_version = "8.5"
 
+  # Suppress PSR naming rules for TT-RSS plugin hook methods
+  # These hooks must use snake_case to match the TT-RSS plugin API
+  [analyzers.meta.issues.PHP]
+    ignore = [
+      "PHPMD.CamelCaseMethodName",
+      "PHPDoc.MissingDocComment"
+    ]
+
 [[analyzers]]
 name = "javascript"
 enabled = true
