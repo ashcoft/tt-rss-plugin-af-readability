@@ -211,6 +211,7 @@ class Af_Readability extends Plugin {
 			try {
 				$result = $this->tryExtractContent($tmp, $url);
 			} catch (Throwable $e) {
+				error_log('[Af_Readability] ' . get_class($e) . ' for URL "' . $url . '": ' . $e->getMessage());
 				$result = false;
 			}
 		}
@@ -390,6 +391,16 @@ class Af_Readability extends Plugin {
 	}
 
 	function embed() : void {
+		// Enforce authentication before processing request
+		if (session_status() !== PHP_SESSION_ACTIVE) {
+			@session_start();
+		}
+		if (empty($_SESSION['uid'])) {
+			http_response_code(401);
+			print json_encode(["error" => "authentication required"]);
+			return;
+		}
+
 		$article_id = (int) $_REQUEST["id"];
 
 		$sth = $this->pdo->prepare("SELECT link FROM ttrss_entries WHERE id = ?");
