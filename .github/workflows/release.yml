@@ -37,7 +37,6 @@ jobs:
         uses: actions/setup-node@8f152de45cc393bb48ce5d89d36b731f54556e65
         with:
           node-version: '24'
-          cache: 'npm'
 
       - name: Install semantic-release with locked versions
         run: |
@@ -46,7 +45,7 @@ jobs:
             "@semantic-release/exec@6.0.3" \
             "@semantic-release/git@10.0.1" \
             "@semantic-release/github@9.2.6"
-          npm ci --ignore-scripts
+          npm install --ignore-scripts
 
       - name: Release with semantic-release
         env:
