@@ -35,26 +35,9 @@ jobs:
       - name: Get latest readability version from Packagist
         id: latest-version
         run: |
-          curl -sS "https://packagist.org/packages/fivefilters/readability.php.json" > /tmp/packagist.json
-          # Versions are stored as dict keys, sort by semantic versioning
-          LATEST=$(python3 -c "
-import re
-
-def parse_version(v):
-    '''Parse version into comparable tuple'''
-    v = v.lstrip('v')
-    # Extract numeric parts
-    match = re.match(r'^(\d+)\.(\d+)\.(\d+)(.*)', v)
-    if match:
-        major, minor, patch, suffix = match.groups()
-        return (int(major), int(minor), int(patch), suffix)
-    return (0, 0, 0, v)
-
-data = __import__('json').load(open('/tmp/packagist.json'))
-versions = list(data['package']['versions'].keys())
-sorted_versions = sorted(versions, key=parse_version, reverse=True)
-print(sorted_versions[0])
-")
+          curl -sS "https://packagist.org/packages/fivefilters/readability.php.json" -o /tmp/packagist.json
+          echo "aW1wb3J0IGpzb24sIHJlCiBkZWYgcGFyc2VfdmVyc2lvbih2KToKICAgIHYgPSB2LmxzdHJpcCgndiccpCiAgICBtYXRjaCA9IHJlLm1hdGNoKHInXigkezEpXC5cezIpXC4oMWQpXC4oLiopJywgdikKICAgIGlmIG1hdGNoOgogICAgICAgIG1ham9yLCBtaW5vciwgcGF0Y2gsIHN1ZmZpeCA9IG1hdGNoLmdyb3VwcygpCiAgICAgICAgcmV0dXJuIChpbnQobWFqb3IpLCBpbnQobWlub3IpLCBpbnQocGF0Y2gpLCBzdWZmaXgpCiAgICByZXR1cm4gKDAsIDAsIDAsIHYpCmRhdGEgPSBqc29uLmxvYWQob3BlbignL3RtcC9wYWNrYWdpc3QuanNvbicpKQp2ZXJzaW9ucyA9IGxpc3QoZGF0YVsncGFja2FnZSddWyd2ZXJzaW9ucyddLmtleXMoKSkKc29ydGVkX3ZlcnNpb25zID0gc29ydGVkKHZlcnNpb25zLCBrZXk9cGFyc2VfdmVyc2lvbiwgcmV2ZXJzZT1UcnVlKQpwcmludChzb3J0ZWRfdmVyc2lvbnNbMF0pCg==" | base64 -d > /tmp/get_version.py
+          LATEST=$(python3 /tmp/get_version.py)
           echo "latest_version=$LATEST" >> $GITHUB_OUTPUT
           echo "Latest readability.php version: $LATEST"
 
