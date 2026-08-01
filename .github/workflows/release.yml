@@ -9,6 +9,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  issues: write
 
 jobs:
   release-please:
@@ -20,7 +21,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@b604ade2a87db23f8871b7182e69ec5e75effb45
         with:
-          php-version: '8.5'
+          php-version: '8.4'
           tools: composer
 
       - name: Install dependencies
@@ -36,19 +37,7 @@ jobs:
         uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          release-type: composer
+          release-type: php
           package-name: ashcoft/tt-rss-plugin-af-readability
           target-branch: main
           extra-files: composer.json
-
-      - name: Create GitHub Release
-        if: steps.release.outputs.releases_created == 'true'
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
-        with:
-          tag_name: ${{ steps.release.outputs.tag_name }}
-          release_name: ${{ steps.release.outputs.tag_name }}
-          body: ${{ steps.release.outputs.release_body }}
-          draft: false
-          prerelease: ${{ steps.release.outputs.prerelease == 'true' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

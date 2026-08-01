@@ -28,7 +28,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@b604ade2a87db23f8871b7182e69ec5e75effb45
         with:
-          php-version: '8.5'
+          php-version: '8.4'
           coverage: none
           tools: composer
 
@@ -89,7 +89,7 @@ jobs:
             This PR was automatically created by the Dependency Update workflow.
 
             ### Release Notes
-            Check the release notes: https://github.com/fivefilters/readability.php/releases/tag/${{ steps.check.outputs.new_version }}
+            Check the release notes: https://github.com/fivefilters/readability.php/releases/tag/v${{ steps.check.outputs.latest_version }}
 
             ### Actions
             - [ ] Review the changes
