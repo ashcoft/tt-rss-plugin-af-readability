@@ -53,10 +53,14 @@ jobs:
           GIT_COMMITTER_NAME: semantic-release
           GIT_COMMITTER_EMAIL: semantic-release@users.noreply.github.com
         run: |
+          # Use set +e to prevent immediate exit on error, allowing us to capture
+          # semantic-release's exit code and handle "no release needed" gracefully.
+          # Exit code 4 means no conventional commits since last release (not an error).
           set +e
           npx --no semantic-release
           exit_code=$?
-          # Exit code 4 means no release needed (no conventional commits since last release)
+          set -e
+          # Handle "no release needed" (exit code 4) as success
           if [ $exit_code -eq 4 ]; then
             echo "No release needed (no conventional commits)"
             exit 0
