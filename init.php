@@ -1,12 +1,21 @@
 <?php
-require_once __DIR__ . "/vendor/autoload.php";
+// Prevent double-loading of autoloader (can occur if plugin is installed in multiple locations)
+if (!class_exists('ComposerAutoloaderInit', false)) {
+    require_once __DIR__ . "/vendor/autoload.php";
+}
 
 use \fivefilters\Readability\Readability;
+
+// Prevent class redeclaration if plugin is loaded from multiple paths
+if (class_exists('Af_Readability', false)) {
+    return;
+}
 
 /**
  * Af_Readability - Tiny Tiny RSS plugin for extracting full article content
  * using Readability.php to inline article text into feed entries.
  *
+ * @version 4.1.0
  */
 class Af_Readability extends Plugin {
 

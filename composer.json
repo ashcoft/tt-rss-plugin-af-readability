@@ -2,6 +2,7 @@
     "name": "ashcoft/tt-rss-plugin-af-readability",
     "description": "Tiny Tiny RSS plugin for extracting full article content using Readability.php",
     "type": "project",
+    "version": "4.1.0",
     "license": "GPL-2.0-or-later",
     "minimum-stability": "stable",
     "prefer-stable": true,
@@ -24,5 +25,11 @@
     },
     "config": {
         "sort-packages": true
+    },
+    "extra": {
+        "ttrss-plugin": {
+            "plugin-class": "Af_Readability",
+            "plugin-name": "af_readability"
+        }
     }
 }
