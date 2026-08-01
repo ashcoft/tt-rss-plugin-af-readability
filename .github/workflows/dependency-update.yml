@@ -23,10 +23,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        uses: actions/checkout@v4
 
       - name: Set up PHP
-        uses: shivammathur/setup-php@b604ade2a87db23f8871b7182e69ec5e75effb45
+        uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
           coverage: none
@@ -36,7 +36,7 @@ jobs:
         id: latest-version
         run: |
           curl -sS "https://packagist.org/packages/fivefilters/readability.php.json" -o /tmp/packagist.json
-          echo "aW1wb3J0IGpzb24sIHJlCiBkZWYgcGFyc2VfdmVyc2lvbih2KToKICAgIHYgPSB2LmxzdHJpcCgndiccpCiAgICBtYXRjaCA9IHJlLm1hdGNoKHInXigkezEpXC5cezIpXC4oMWQpXC4oLiopJywgdikKICAgIGlmIG1hdGNoOgogICAgICAgIG1ham9yLCBtaW5vciwgcGF0Y2gsIHN1ZmZpeCA9IG1hdGNoLmdyb3VwcygpCiAgICAgICAgcmV0dXJuIChpbnQobWFqb3IpLCBpbnQobWlub3IpLCBpbnQocGF0Y2gpLCBzdWZmaXgpCiAgICByZXR1cm4gKDAsIDAsIDAsIHYpCmRhdGEgPSBqc29uLmxvYWQob3BlbignL3RtcC9wYWNrYWdpc3QuanNvbicpKQp2ZXJzaW9ucyA9IGxpc3QoZGF0YVsncGFja2FnZSddWyd2ZXJzaW9ucyddLmtleXMoKSkKc29ydGVkX3ZlcnNpb25zID0gc29ydGVkKHZlcnNpb25zLCBrZXk9cGFyc2VfdmVyc2lvbiwgcmV2ZXJzZT1UcnVlKQpwcmludChzb3J0ZWRfdmVyc2lvbnNbMF0pCg==" | base64 -d > /tmp/get_version.py
+          echo "aW1wb3J0IGpzb24sIHJlCmRlZiBwYXJzZV92ZXJzaW9uKHYpOgogICAgdiA9IHYubHN0cmlwKCd2JykKICAgIG1hdGNoID0gcmUubWF0Y2gocideKFxkKylcLihcZCspXC4oXGQrKSguKiknLCB2KQogICAgaWYgbWF0Y2g6CiAgICAgICAgbWFqb3IsIG1pbm9yLCBwYXRjaCwgc3VmZml4ID0gbWF0Y2guZ3JvdXBzKCkKICAgICAgICByZXR1cm4gKGludChtYWpvciksIGludChtaW5vciksIGludChwYXRjaCksIHN1ZmZpeCkKICAgIHJldHVybiAoMCwgMCwgMCwgdikKZGF0YSA9IGpzb24ubG9hZChvcGVuKCcvdG1wL3BhY2thZ2lzdC5qc29uJykpCnZlcnNpb25zID0gbGlzdChkYXRhWydwYWNrYWdlJ11bJ3ZlcnNpb25zJ10ua2V5cygpKQpzb3J0ZWRfdmVyc2lvbnMgPSBzb3J0ZWQodmVyc2lvbnMsIGtleT1wYXJzZV92ZXJzaW9uLCByZXZlcnNlPVRydWUpCnByaW50KHNvcnRlZF92ZXJzaW9uc1swXSkK" | base64 -d > /tmp/get_version.py
           LATEST=$(python3 /tmp/get_version.py)
           echo "latest_version=$LATEST" >> $GITHUB_OUTPUT
           echo "Latest readability.php version: $LATEST"
@@ -44,7 +44,7 @@ jobs:
       - name: Check for updates
         id: check
         run: |
-          LATEST="${{ steps.latest-version.outputs.latest_version }}"
+          LATEST="${ steps.latest-version.outputs.latest_version }"
           
           # Check if current constraint allows the latest version
           CURRENT=$(grep -oP '"fivefilters/readability.php": "\^?\K[\d.]+' composer.json)
@@ -69,29 +69,29 @@ jobs:
       - name: Update dependencies
         if: steps.check.outputs.update_available == 'true'
         run: |
-          composer require fivefilters/readability.php:${{ steps.check.outputs.new_version }} --no-interaction --with-all-dependencies
+          composer require fivefilters/readability.php:${ steps.check.outputs.new_version } --no-interaction --with-all-dependencies
 
       - name: Create Pull Request
         if: steps.check.outputs.update_available == 'true'
-        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676
+        uses: peter-evans/create-pull-request@v7
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "Update fivefilters/readability.php to ${{ steps.check.outputs.new_version }}"
-          title: "Update fivefilters/readability.php to ${{ steps.check.outputs.new_version }}"
+          token: ${ secrets.GITHUB_TOKEN }
+          commit-message: "Update fivefilters/readability.php to ${ steps.check.outputs.new_version }"
+          title: "Update fivefilters/readability.php to ${ steps.check.outputs.new_version }"
           body: |
             ## Dependency Update
 
-            Update `fivefilters/readability.php` to version `${{ steps.check.outputs.new_version }}`.
+            Update `fivefilters/readability.php` to version `${ steps.check.outputs.new_version }`.
 
             This PR was automatically created by the Dependency Update workflow.
 
             ### Release Notes
-            Check the release notes: https://github.com/fivefilters/readability.php/releases/tag/${{ steps.check.outputs.new_version }}
+            Check the release notes: https://github.com/fivefilters/readability.php/releases/tag/${ steps.check.outputs.new_version }
 
             ### Actions
             - [ ] Review the changes
             - [ ] Run tests if available
             - [ ] Merge when ready
-          branch: "dependabot/readability-${{ steps.check.outputs.new_version }}"
+          branch: "dependabot/readability-${ steps.check.outputs.new_version }"
           delete-branch: true
           base: main
