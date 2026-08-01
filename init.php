@@ -1,7 +1,20 @@
 <?php
 // Prevent double-loading of autoloader (can occur if plugin is installed in multiple locations)
-if (!class_exists('ComposerAutoloaderInit', false)) {
-    require_once __DIR__ . "/vendor/autoload.php";
+// Using class_exists with autoload=false to check if Readability is already loaded
+// If it's already loaded, we don't need to load our autoloader again
+$autoload_file = __DIR__ . "/vendor/autoload.php";
+if (file_exists($autoload_file)) {
+    // Check if Readability class is already loaded (without triggering autoloader)
+    // This handles the case where the plugin is loaded from multiple paths
+    if (!class_exists(\fivefilters\Readability\Readability::class, false)) {
+        // Readability not loaded yet, try to load our autoloader
+        // Use include_once to prevent double-loading if called multiple times
+        $loaded = @include_once $autoload_file;
+        if (!$loaded) {
+            // Fallback: require_once if include_once failed (e.g., file was already included)
+            require_once $autoload_file;
+        }
+    }
 }
 
 use \fivefilters\Readability\Readability;
