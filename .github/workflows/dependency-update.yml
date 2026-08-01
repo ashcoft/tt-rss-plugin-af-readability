@@ -32,38 +32,27 @@ jobs:
           coverage: none
           tools: composer
 
-      - name: Get current readability version
-        id: current-version
-        run: |
-          CURRENT=$(grep -oP '"fivefilters/readability.php": "\K[^"]+' composer.json)
-          echo "current_version=$CURRENT" >> $GITHUB_OUTPUT
-          echo "Current readability.php version: $CURRENT"
-
       - name: Get latest readability version from Packagist
         id: latest-version
         run: |
           curl -sS "https://packagist.org/packages/fivefilters/readability.php.json" > /tmp/packagist.json
-          # Versions are stored as dict keys, need to sort by version number
-          # Packagist returns versions in reverse order (newest first)
+          # Versions are stored as dict keys, sort by semantic versioning
           LATEST=$(python3 -c "
-import sys, json
-data = json.load(open('/tmp/packagist.json'))
-versions = list(data['package']['versions'].keys())
-# Remove v prefix and sort
-def sort_key(v):
-    v = v.lstrip('v')
-    parts = []
-    for p in v.replace('-', '.').split('.'):
-        try:
-            parts.append(int(p))
-        except:
-            parts.append(0)
-    # Pad to ensure consistent sorting
-    while len(parts) < 4:
-        parts.append(0)
-    return tuple(parts)
+import re
 
-sorted_versions = sorted(versions, key=sort_key, reverse=True)
+def parse_version(v):
+    '''Parse version into comparable tuple'''
+    v = v.lstrip('v')
+    # Extract numeric parts
+    match = re.match(r'^(\d+)\.(\d+)\.(\d+)(.*)', v)
+    if match:
+        major, minor, patch, suffix = match.groups()
+        return (int(major), int(minor), int(patch), suffix)
+    return (0, 0, 0, v)
+
+data = __import__('json').load(open('/tmp/packagist.json'))
+versions = list(data['package']['versions'].keys())
+sorted_versions = sorted(versions, key=parse_version, reverse=True)
 print(sorted_versions[0])
 ")
           echo "latest_version=$LATEST" >> $GITHUB_OUTPUT
@@ -72,19 +61,23 @@ print(sorted_versions[0])
       - name: Check for updates
         id: check
         run: |
-          CURRENT="${{ steps.current-version.outputs.current_version }}"
           LATEST="${{ steps.latest-version.outputs.latest_version }}"
           
-          # Normalize versions for comparison (remove v prefix)
-          CURRENT_NUM=$(echo "$CURRENT" | sed 's/^v//')
+          # Check if current constraint allows the latest version
+          CURRENT=$(grep -oP '"fivefilters/readability.php": "\^?\K[\d.]+' composer.json)
           LATEST_NUM=$(echo "$LATEST" | sed 's/^v//')
           
-          echo "Comparing: $CURRENT_NUM vs $LATEST_NUM"
+          echo "Current constraint: ^$CURRENT"
+          echo "Latest version: $LATEST_NUM"
           
-          if [ "$CURRENT_NUM" != "$LATEST_NUM" ]; then
-            echo "Update available: $CURRENT_NUM -> $LATEST_NUM"
+          # Compare major.minor (ignore patch for ^ constraint)
+          CURRENT_MAJOR_MINOR=$(echo "$CURRENT" | cut -d. -f1,2)
+          LATEST_MAJOR_MINOR=$(echo "$LATEST_NUM" | cut -d. -f1,2)
+          
+          if [ "$CURRENT_MAJOR_MINOR" != "$LATEST_MAJOR_MINOR" ]; then
+            echo "Update available: ^$CURRENT -> ^$LATEST_MAJOR_MINOR"
             echo "update_available=true" >> $GITHUB_OUTPUT
-            echo "new_version=$LATEST" >> $GITHUB_OUTPUT
+            echo "new_version=^$LATEST_NUM" >> $GITHUB_OUTPUT
           else
             echo "Already up to date"
             echo "update_available=false" >> $GITHUB_OUTPUT
