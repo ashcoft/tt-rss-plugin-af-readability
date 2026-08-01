@@ -49,6 +49,6 @@ jobs:
           release_name: ${{ steps.release.outputs.tag_name }}
           body: ${{ steps.release.outputs.release_body }}
           draft: false
-          prerelease: ${{ steps.release.outputs.tag_name prerelease }}
+          prerelease: ${{ steps.release.outputs.prerelease == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
