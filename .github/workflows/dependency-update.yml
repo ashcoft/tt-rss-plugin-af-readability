@@ -44,7 +44,7 @@ jobs:
       - name: Check for updates
         id: check
         run: |
-          LATEST="${ steps.latest-version.outputs.latest_version }"
+          LATEST="${{ steps.latest-version.outputs.latest_version }}"
           
           # Check if current constraint allows the latest version
           CURRENT=$(grep -oP '"fivefilters/readability.php": "\^?\K[\d.]+' composer.json)
@@ -56,6 +56,9 @@ jobs:
           # Compare major.minor (ignore patch for ^ constraint)
           CURRENT_MAJOR_MINOR=$(echo "$CURRENT" | cut -d. -f1,2)
           LATEST_MAJOR_MINOR=$(echo "$LATEST_NUM" | cut -d. -f1,2)
+          
+          echo "Current major.minor: $CURRENT_MAJOR_MINOR"
+          echo "Latest major.minor: $LATEST_MAJOR_MINOR"
           
           if [ "$CURRENT_MAJOR_MINOR" != "$LATEST_MAJOR_MINOR" ]; then
             echo "Update available: ^$CURRENT -> ^$LATEST_MAJOR_MINOR"
@@ -69,29 +72,29 @@ jobs:
       - name: Update dependencies
         if: steps.check.outputs.update_available == 'true'
         run: |
-          composer require fivefilters/readability.php:${ steps.check.outputs.new_version } --no-interaction --with-all-dependencies
+          composer require fivefilters/readability.php:${{ steps.check.outputs.new_version }} --no-interaction --with-all-dependencies
 
       - name: Create Pull Request
         if: steps.check.outputs.update_available == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
-          token: ${ secrets.GITHUB_TOKEN }
-          commit-message: "Update fivefilters/readability.php to ${ steps.check.outputs.new_version }"
-          title: "Update fivefilters/readability.php to ${ steps.check.outputs.new_version }"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Update fivefilters/readability.php to ${{ steps.check.outputs.new_version }}"
+          title: "Update fivefilters/readability.php to ${{ steps.check.outputs.new_version }}"
           body: |
             ## Dependency Update
 
-            Update `fivefilters/readability.php` to version `${ steps.check.outputs.new_version }`.
+            Update `fivefilters/readability.php` to version `${{ steps.check.outputs.new_version }}`.
 
             This PR was automatically created by the Dependency Update workflow.
 
             ### Release Notes
-            Check the release notes: https://github.com/fivefilters/readability.php/releases/tag/${ steps.check.outputs.new_version }
+            Check the release notes: https://github.com/fivefilters/readability.php/releases/tag/${{ steps.check.outputs.new_version }}
 
             ### Actions
             - [ ] Review the changes
             - [ ] Run tests if available
             - [ ] Merge when ready
-          branch: "dependabot/readability-${ steps.check.outputs.new_version }"
+          branch: "dependabot/readability-${{ steps.check.outputs.new_version }}"
           delete-branch: true
           base: main
