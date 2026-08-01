@@ -15,7 +15,7 @@ class Af_Readability extends Plugin {
 	/**
 	 * @return array{0: null, 1: string, 2: string}
 	 */
-	function about() {
+	public function about() {
 		return array(null,
 			"Try to inline article content using Readability",
 			"fox");
@@ -24,12 +24,12 @@ class Af_Readability extends Plugin {
 	/**
 	 * @return array<string, bool>
 	 */
-	function flags() {
+	public function flags() {
 		return array("needs_curl" => true);
 	}
 
 	/** @return void */
-	function save() {
+	public function save() {
 		$enable_share_anything = checkbox_to_sql_bool($_POST["enable_share_anything"] ?? "");
 
 		$this->host->set($this, "enable_share_anything", $enable_share_anything);
@@ -37,7 +37,11 @@ class Af_Readability extends Plugin {
 		echo __("Data saved.");
 	}
 
-	function init($host)
+	/**
+	 * @param PluginHost $host
+	 * @return void
+	 */
+	public function init($host)
 	{
 		$this->host = $host;
 
@@ -58,7 +62,7 @@ class Af_Readability extends Plugin {
 	/**
 	 * @return string
 	 */
-	function get_js() {
+	public function get_js() {
 		return file_get_contents(__DIR__ . "/init.js");
 	}
 
@@ -66,7 +70,7 @@ class Af_Readability extends Plugin {
 	 * @param array<string, mixed> $line
 	 * @return string
 	 */
-	function hook_article_button($line) {
+	public function hook_article_button($line) {
 		return "<i class='material-icons' onclick=\"Plugins.Af_Readability.embed(".$line["id"].")\"
 			style='cursor : pointer' title=\"".__('Toggle full article text')."\">description</i>";
 	}
@@ -75,7 +79,7 @@ class Af_Readability extends Plugin {
 	 * @param string $args
 	 * @return void
 	 */
-	function hook_prefs_tab($args) {
+	public function hook_prefs_tab($args) {
 		if ($args != "prefFeeds") return;
 
 		$enable_share_anything = sql_bool_to_bool($this->host->get($this, "enable_share_anything"));
@@ -149,7 +153,7 @@ class Af_Readability extends Plugin {
 	 * @param int $feed_id
 	 * @return void
 	 */
-	function hook_prefs_edit_feed($feed_id) {
+	public function hook_prefs_edit_feed($feed_id) {
 		$enabled_feeds = $this->get_stored_array("enabled_feeds");
 		$append_feeds = $this->get_stored_array("append_feeds");
 		?>
@@ -176,7 +180,7 @@ class Af_Readability extends Plugin {
 	 * @param int $feed_id
 	 * @return void
 	 */
-	function hook_prefs_save_feed($feed_id) {
+	public function hook_prefs_save_feed($feed_id) {
 		$enabled_feeds = $this->get_stored_array("enabled_feeds");
 		$append_feeds = $this->get_stored_array("append_feeds");
 
@@ -215,7 +219,7 @@ class Af_Readability extends Plugin {
 	 * @param string $action
 	 * @return array<string, mixed>
 	 */
-	function hook_article_filter_action($article, $action) {
+	public function hook_article_filter_action($article, $action) {
 		switch ($action) {
 			case "action_inline":
 				return $this->process_article($article, false);
@@ -336,7 +340,7 @@ class Af_Readability extends Plugin {
 	 * @return array<string,mixed>
 	 * @throws PDOException
 	 */
-	function process_article(array $article, bool $append_mode) : array {
+	public function process_article(array $article, bool $append_mode) : array {
 
 		$extracted_content = $this->extract_content($article["link"]);
 
@@ -367,7 +371,7 @@ class Af_Readability extends Plugin {
 	 * @param array<string, mixed> $article
 	 * @return array<string, mixed>
 	 */
-	function hook_article_filter($article) {
+	public function hook_article_filter($article) {
 
 		$enabled_feeds = $this->get_stored_array("enabled_feeds");
 		$append_feeds = $this->get_stored_array("append_feeds");
@@ -385,7 +389,7 @@ class Af_Readability extends Plugin {
 	 * @param string $link
 	 * @return string|false
 	 */
-	function hook_get_full_text($link) {
+	public function hook_get_full_text($link) {
 		$enable_share_anything = $this->host->get($this, "enable_share_anything");
 
 		if ($enable_share_anything) {
@@ -405,7 +409,7 @@ class Af_Readability extends Plugin {
 	/**
 	 * @return int
 	 */
-	function api_version() {
+	public function api_version() {
 		return 2;
 	}
 
@@ -433,7 +437,7 @@ class Af_Readability extends Plugin {
 	/**
 	 * @return void
 	 */
-	function embed() : void {
+	public function embed() : void {
 		$article_id = (int) $_REQUEST["id"];
 
 		$sth = $this->pdo->prepare("SELECT link FROM ttrss_entries WHERE id = ?");
