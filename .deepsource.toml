@@ -15,6 +15,7 @@ enabled = true
 
   [linter.php.phpcs]
     enabled = true
+    standards = ["PSR12"]
 
 [[analyzers]]
 name = "php"
