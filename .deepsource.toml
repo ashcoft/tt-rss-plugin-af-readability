@@ -10,9 +10,11 @@ exclude_patterns = [
   "vendor/**"
 ]
 
-[lint]
-  # Ignore pre-existing issues for new PRs
-  enable = true
+[linter.php]
+enabled = true
+
+  [linter.php.phpcs]
+    enabled = true
 
 [[analyzers]]
 name = "php"
