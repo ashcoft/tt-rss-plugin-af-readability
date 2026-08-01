@@ -1,5 +1,4 @@
 <?php
-/** @deepsource ignore-all */
 require_once __DIR__ . "/vendor/autoload.php";
 
 use \fivefilters\Readability\Readability;
@@ -8,7 +7,6 @@ use \fivefilters\Readability\Readability;
  * Af_Readability - Tiny Tiny RSS plugin for extracting full article content
  * using Readability.php to inline article text into feed entries.
  *
- * @deepsource ignore-all
  */
 class Af_Readability extends Plugin {
 
@@ -19,7 +17,6 @@ class Af_Readability extends Plugin {
      * Get plugin info.
      *
      * @return array Plugin info array
-     * @deepsource ignore-all
      */
     public function about() {
         return array(null,
@@ -31,7 +28,6 @@ class Af_Readability extends Plugin {
      * Get plugin flags.
      *
      * @return array Plugin flags
-     * @deepsource ignore-all
      */
     public function flags() {
         return array("needs_curl" => true);
@@ -41,7 +37,6 @@ class Af_Readability extends Plugin {
      * Save plugin settings.
      *
      * @return void
-     * @deepsource ignore-all
      */
     public function save() {
         $enable_share_anything = checkbox_to_sql_bool($_POST["enable_share_anything"] ?? "");
@@ -56,7 +51,6 @@ class Af_Readability extends Plugin {
      *
      * @param PluginHost $host
      * @return void
-     * @deepsource ignore-all
      */
     public function init($host)
     {
@@ -80,7 +74,6 @@ class Af_Readability extends Plugin {
      * Get JavaScript for the plugin.
      *
      * @return string JavaScript content
-     * @deepsource ignore-all
      */
     public function get_js() {
         return file_get_contents(__DIR__ . "/init.js");
@@ -91,7 +84,6 @@ class Af_Readability extends Plugin {
      *
      * @param array $line Article line data
      * @return string HTML for the button
-     * @deepsource ignore-all
      */
     public function hook_article_button($line) {
         return "<i class='material-icons' onclick=\"Plugins.Af_Readability.embed(".$line["id"].")\"
@@ -103,7 +95,6 @@ class Af_Readability extends Plugin {
      *
      * @param string $args Tab identifier
      * @return void
-     * @deepsource ignore-all
      */
     public function hook_prefs_tab($args) {
         if ($args != "prefFeeds") {
@@ -146,11 +137,11 @@ class Af_Readability extends Plugin {
 
             <?php
                 /* cleanup */
-                $enabled_feeds = $this->filter_unknown_feeds(
-                    $this->get_stored_array("enabled_feeds"));
+                $enabled_feeds = $this->filterUnknownFeeds(
+                    $this->getStoredArray("enabled_feeds"));
 
-                $append_feeds = $this->filter_unknown_feeds(
-                    $this->get_stored_array("append_feeds"));
+                $append_feeds = $this->filterUnknownFeeds(
+                    $this->getStoredArray("append_feeds"));
 
                 $this->host->set($this, "enabled_feeds", $enabled_feeds);
                 $this->host->set($this, "append_feeds", $append_feeds);
@@ -182,11 +173,10 @@ class Af_Readability extends Plugin {
      *
      * @param int $feed_id Feed ID
      * @return void
-     * @deepsource ignore-all
      */
     public function hook_prefs_edit_feed($feed_id) {
-        $enabled_feeds = $this->get_stored_array("enabled_feeds");
-        $append_feeds = $this->get_stored_array("append_feeds");
+        $enabled_feeds = $this->getStoredArray("enabled_feeds");
+        $append_feeds = $this->getStoredArray("append_feeds");
         ?>
 
         <header><?= __("Readability") ?></header>
@@ -212,11 +202,10 @@ class Af_Readability extends Plugin {
      *
      * @param int $feed_id Feed ID
      * @return void
-     * @deepsource ignore-all
      */
     public function hook_prefs_save_feed($feed_id) {
-        $enabled_feeds = $this->get_stored_array("enabled_feeds");
-        $append_feeds = $this->get_stored_array("append_feeds");
+        $enabled_feeds = $this->getStoredArray("enabled_feeds");
+        $append_feeds = $this->getStoredArray("append_feeds");
 
         $enable = checkbox_to_sql_bool($_POST["af_readability_enabled"] ?? "");
         $append = checkbox_to_sql_bool($_POST["af_readability_append"] ?? "");
@@ -254,14 +243,13 @@ class Af_Readability extends Plugin {
      * @param array $article Article data
      * @param string $action Action name
      * @return array Modified article
-     * @deepsource ignore-all
      */
     public function hook_article_filter_action($article, $action) {
         switch ($action) {
             case "action_inline":
-                return $this->process_article($article, false);
+                return $this->processArticle($article, false);
             case "action_append":
-                return $this->process_article($article, true);
+                return $this->processArticle($article, true);
             default:
                 return $article;
         }
@@ -270,9 +258,8 @@ class Af_Readability extends Plugin {
     /**
      * @param string $url
      * @return string|false
-     * @deepsource ignore-all
      */
-    public function extract_content(string $url) {
+    public function extractContent(string $url) {
         $result = false;
 
         $tmp = UrlHelper::fetch([
@@ -379,11 +366,10 @@ class Af_Readability extends Plugin {
      * @param bool $append_mode
      * @return array<string,mixed>
      * @throws PDOException
-     * @deepsource ignore-all
      */
-    public function process_article(array $article, bool $append_mode) : array {
+    public function processArticle(array $article, bool $append_mode) : array {
 
-        $extracted_content = $this->extract_content($article["link"]);
+        $extracted_content = $this->extractContent($article["link"]);
 
         # let's see if there's anything of value in there
         $content_test = trim(strip_tags(Sanitizer::sanitize($extracted_content)));
@@ -404,9 +390,8 @@ class Af_Readability extends Plugin {
      * @return array<int|string, mixed>
      * @throws PDOException
      * @deprecated
-     * @deepsource ignore-all
      */
-    private function get_stored_array(string $name) : array {
+    private function getStoredArray(string $name) : array {
         return $this->host->get_array($this, $name);
     }
 
@@ -415,12 +400,11 @@ class Af_Readability extends Plugin {
      *
      * @param array $article Article data
      * @return array Modified article
-     * @deepsource ignore-all
      */
     public function hook_article_filter($article) {
 
-        $enabled_feeds = $this->get_stored_array("enabled_feeds");
-        $append_feeds = $this->get_stored_array("append_feeds");
+        $enabled_feeds = $this->getStoredArray("enabled_feeds");
+        $append_feeds = $this->getStoredArray("append_feeds");
 
         $feed_id = $article["feed"]["id"];
 
@@ -428,7 +412,7 @@ class Af_Readability extends Plugin {
             return $article;
         }
 
-        return $this->process_article($article, in_array($feed_id, $append_feeds));
+        return $this->processArticle($article, in_array($feed_id, $append_feeds));
 
     }
 
@@ -437,13 +421,12 @@ class Af_Readability extends Plugin {
      *
      * @param string $link Article URL
      * @return string|false Extracted content or false
-     * @deepsource ignore-all
      */
     public function hook_get_full_text($link) {
         $enable_share_anything = $this->host->get($this, "enable_share_anything");
 
         if ($enable_share_anything) {
-            $extracted_content = $this->extract_content($link);
+            $extracted_content = $this->extractContent($link);
 
             # let's see if there's anything of value in there
             $content_test = trim(strip_tags(Sanitizer::sanitize($extracted_content)));
@@ -460,7 +443,6 @@ class Af_Readability extends Plugin {
      * Get API version.
      *
      * @return int API version number
-     * @deepsource ignore-all
      */
     public function api_version() {
         return 2;
@@ -470,9 +452,8 @@ class Af_Readability extends Plugin {
      * @param array<int> $enabled_feeds
      * @return array<int>
      * @throws PDOException
-     * @deepsource ignore-all
      */
-    private function filter_unknown_feeds(array $enabled_feeds) : array {
+    private function filterUnknownFeeds(array $enabled_feeds) : array {
         $tmp = array();
 
         foreach ($enabled_feeds as $feed) {
@@ -492,7 +473,6 @@ class Af_Readability extends Plugin {
      * Embed handler for article content.
      *
      * @return void
-     * @deepsource ignore-all
      */
     public function embed() : void {
         // Enforce authentication before processing request
@@ -513,7 +493,7 @@ class Af_Readability extends Plugin {
         $ret = [];
 
         if ($row = $sth->fetch()) {
-            $ret["content"] = Sanitizer::sanitize($this->extract_content($row["link"]));
+            $ret["content"] = Sanitizer::sanitize($this->extractContent($row["link"]));
         }
 
         print json_encode($ret);
